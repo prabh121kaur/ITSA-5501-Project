@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  frontend:
+    image: nginx:alpine
+    container_name: itsa_frontend
+    volumes:
+      - ../frontend:/usr/share/nginx/html:ro
+    ports:
+      - "9090:80"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  user-db:
+    image: mongo:5
+    container_name: itsa_mongo
+    volumes:
+      - user_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  product-db:
+    image: postgres:15
+    container_name: itsa_postgres
+    environment:
+      POSTGRES_USER: productuser
+      POSTGRES_PASSWORD: productpass
+      POSTGRES_DB: productdb
+    volumes:
+      - product_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  cache:
+    image: redis:7
+    container_name: itsa_redis
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: itsa_prometheus
+    volumes:
+      - ../Prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9091:9090"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  user_data:
+  product_data:
+
+networks:
+  app-network:
+    driver: bridge
